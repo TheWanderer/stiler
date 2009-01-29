@@ -1,0 +1,11 @@
+Basically a simple python script which does tiling on any windowmanager (Perfectly on pekwm and openbox. Partly on compiz due to the fact that compiz says it has a single desktop even if there are 4 virtual desktops, which means all the windows you have will be tiled).
+It uses wmctrl to get the info and manage the windows. Bind it to a key or to autowhatever-on-window-creation-hook.
+
+Currently options are
+simple - The basic tiling layout . 1 Main + all other at the side.
+
+left,right - Does the new windows7 ish style of sticking to the sides.
+
+You can change the main window factor BottomPadding TopPadding LeftPadding RightPadding though it detects most of the panels. You may have to change wintitle and border according to your theme.
+
+If you need other layouts modify get_simple_tile 
