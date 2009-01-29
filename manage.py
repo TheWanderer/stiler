@@ -2,6 +2,7 @@
 import sys
 import os
 import commands
+import pickle
 
 BottomPadding = 0
 TopPadding = 0
@@ -9,29 +10,63 @@ LeftPadding = 0
 RightPadding = 0
 WinTitle = 21
 WinBorder = 1
+TempFile = "/tmp/tile_winlist"
+MwFactor = 0.5
 
-def get_desktop():
-    output = commands.getoutput("wmctrl -d").split("\n")
-    current =  filter(lambda x: x.split()[1] == "*" , output)[0].split()
-    print current
+def initialize():
+    desk_output = commands.getoutput("wmctrl -d").split("\n")
+    desk_list = [line.split()[0] for line in desk_output]
+
+    current =  filter(lambda x: x.split()[1] == "*" , desk_output)[0].split()
+
     desktop = current[0]
     width =  current[8].split("x")[0]
     height =  current[8].split("x")[1]
     orig_x =  current[7].split(",")[0]
     orig_y =  current[7].split(",")[1]
-    return (desktop,orig_x,orig_y,width,height)
 
-(DESKTOP,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr) = get_desktop()
+    win_output = commands.getoutput("wmctrl -lG").split("\n")
+    win_list = {}
+
+
+    for desk in desk_list:
+        win_list[desk] = map(lambda y: hex(int(y.split()[0],16)) , filter(lambda x: x.split()[1] == desk, win_output ))
+
+
+    return (desktop,orig_x,orig_y,width,height,win_list)
+
+
+def get_active_window():
+    return str(hex(int(commands.getoutput("xdotool getactivewindow").split()[0])))
+    
+
+def store(object,file):
+    with open(file, 'w') as f:
+        pickle.dump(object,f)
+    f.close()
+
+def retrieve(file):
+    try:
+        with open(file,'r+') as f:
+            obj = pickle.load(f)
+        f.close()
+        return(obj)
+    except:
+        f = open(file,'w')
+        f.close
+        dict = {}
+        return (dict)
+
+
+ 
+
+(Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
 MaxWidth = int(MaxWidthStr) - LeftPadding - RightPadding
 MaxHeight = int(MaxHeightStr) - TopPadding - BottomPadding
 OrigX = int(OrigXstr) + LeftPadding
 OrigY = int(OrigYstr) + TopPadding 
+OldWinList = retrieve(TempFile)
 
-MwFactor = 0.5
-
-def get_windows(desktop):
-    output = commands.getoutput("wmctrl -lG").split("\n")
-    return filter(lambda x: x.split()[1] == desktop, output )
 
 def get_simple_tile(wincount):
     rows = wincount - 1
@@ -59,10 +94,8 @@ def move_active(PosX,PosY,Width,Height):
 
 def move_window(windowid,PosX,PosY,Width,Height):
   command =  " wmctrl -i -r " + windowid +  " -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
-  print command
   os.system(command)
   command = "wmctrl -i -r " + windowid + " -b remove,hidden,shaded"
-  print command
   os.system(command)
 
 def left():
@@ -78,21 +111,53 @@ def right():
     PosX=MaxWidth/2
     PosY=0
     move_active(PosX,PosY,Width,Height)
+    
+def compare_win_list(newlist,oldlist):
+    templist = []
+    for window in oldlist:
+        if newlist.count(window) != 0:
+            templist.append(window)
+    for window in newlist:
+        if oldlist.count(window) == 0: 
+            templist.append(window)
+    return templist
+
+
+
+
+def create_win_list():
+    Windows = WinList[Desktop]
+
+    if OldWinList == {}:
+        pass
+    else:
+        OldWindows = OldWinList[Desktop]
+        if Windows == OldWindows:
+            pass
+        else:
+            Windows = compare_win_list(Windows,OldWindows)
+
+    return Windows
+
+
+def arrange(layout,windows):
+    for win , lay  in zip(windows,layout):
+        move_window(win,lay[0],lay[1],lay[2],lay[3])
+    WinList[Desktop]=windows
+    store(WinList,TempFile)
+
 
 def simple():
-    Windows = get_windows(DESKTOP)
-    WinCount = len(Windows)
-    Layout =   get_simple_tile(WinCount)
+    Windows = create_win_list()
+    arrange(get_simple_tile(len(Windows)),Windows)
+   
+def swap():
+    winlist = create_win_list()
+    active = get_active_window()
+    winlist.remove(active)
+    winlist.insert(0,active)
+    arrange(get_simple_tile(len(winlist)),winlist)
 
-    for n in range(0,WinCount):
-        window = Windows[n].split()[0]
-        x = Layout[n][0]
-        y = Layout[n][1]
-        w = Layout[n][2]
-        h = Layout[n][3]
-        move_window(window,x,y,w,h)
-
-    
 
 if sys.argv[1] == "left":
     left()
@@ -100,5 +165,7 @@ elif sys.argv[1] == "right":
     right()
 elif sys.argv[1] == "simple":
     simple()
+elif sys.argv[1] == "swap":
+    swap()
 
 
