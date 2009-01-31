@@ -11,7 +11,7 @@ RightPadding = 0
 WinTitle = 21
 WinBorder = 1
 TempFile = "/tmp/tile_winlist"
-MwFactor = 0.5
+MwFactor = 0.65
 
 def initialize():
     desk_output = commands.getoutput("wmctrl -d").split("\n")
@@ -100,16 +100,16 @@ def move_window(windowid,PosX,PosY,Width,Height):
 
 def left():
     Width=MaxWidth/2-1
-    Height=MaxHeight
-    PosX=0
-    PosY=0
+    Height=MaxHeight - WinTitle -WinBorder
+    PosX=LeftPadding
+    PosY=TopPadding
     move_active(PosX,PosY,Width,Height)
 
 def right():
     Width=MaxWidth/2-1
-    Height=MaxHeight
+    Height=MaxHeight - WinTitle - WinBorder 
     PosX=MaxWidth/2
-    PosY=0
+    PosY=TopPadding
     move_active(PosX,PosY,Width,Height)
     
 def compare_win_list(newlist,oldlist):
