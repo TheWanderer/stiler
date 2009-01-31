@@ -6,6 +6,8 @@ simple - The basic tiling layout . 1 Main + all other at the side.
 
 left,right - Does the new windows7 ish style of sticking to the sides.
 
+swap - will swap the active window to master column
+
 You can change the main window factor BottomPadding TopPadding LeftPadding RightPadding though it detects most of the panels. You may have to change wintitle and border according to your theme.
 
 If you need other layouts modify get_simple_tile 
