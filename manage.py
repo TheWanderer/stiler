@@ -13,6 +13,7 @@ WinBorder = 1
 TempFile = "/tmp/tile_winlist"
 MwFactor = 0.65
 
+
 def initialize():
     desk_output = commands.getoutput("wmctrl -d").split("\n")
     desk_list = [line.split()[0] for line in desk_output]
@@ -28,10 +29,8 @@ def initialize():
     win_output = commands.getoutput("wmctrl -lG").split("\n")
     win_list = {}
 
-
     for desk in desk_list:
         win_list[desk] = map(lambda y: hex(int(y.split()[0],16)) , filter(lambda x: x.split()[1] == desk, win_output ))
-
 
     return (desktop,orig_x,orig_y,width,height,win_list)
 
@@ -45,6 +44,7 @@ def store(object,file):
         pickle.dump(object,f)
     f.close()
 
+
 def retrieve(file):
     try:
         with open(file,'r+') as f:
@@ -57,8 +57,6 @@ def retrieve(file):
         dict = {}
         return (dict)
 
-
- 
 
 (Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
 MaxWidth = int(MaxWidthStr) - LeftPadding - RightPadding
@@ -81,22 +79,33 @@ def get_simple_tile(wincount):
     width=int((MaxWidth*(1-MwFactor))-2*WinBorder)
     height=int(MaxHeight/rows - WinTitle-WinBorder)
     
-    
     for n in range(0,rows):
         y= OrigY+int((MaxHeight/rows)*(n))
         layout.append((x,y,width,height))
 
     return layout
 
+
 def move_active(PosX,PosY,Width,Height):
-  command =  " wmctrl -r :ACTIVE: -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
-  os.system(command)
+    command =  " wmctrl -r :ACTIVE: -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
+    os.system(command)
+
 
 def move_window(windowid,PosX,PosY,Width,Height):
-  command =  " wmctrl -i -r " + windowid +  " -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
-  os.system(command)
-  command = "wmctrl -i -r " + windowid + " -b remove,hidden,shaded"
-  os.system(command)
+    command =  " wmctrl -i -r " + windowid +  " -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
+    os.system(command)
+    command = "wmctrl -i -r " + windowid + " -b remove,hidden,shaded"
+    os.system(command)
+
+
+def raise_window(windowid):
+    if windowid == ":ACTIVE:":
+        command = "wmctrl -a :ACTIVE: "
+    else:
+        command - "wmctrl -i -a " + windowid
+    
+    os.system(command)
+
 
 def left():
     Width=MaxWidth/2-1
@@ -104,6 +113,8 @@ def left():
     PosX=LeftPadding
     PosY=TopPadding
     move_active(PosX,PosY,Width,Height)
+    raise_window(":ACTIVE:")
+
 
 def right():
     Width=MaxWidth/2-1
@@ -111,7 +122,9 @@ def right():
     PosX=MaxWidth/2
     PosY=TopPadding
     move_active(PosX,PosY,Width,Height)
+    raise_window(":ACTIVE:")
     
+
 def compare_win_list(newlist,oldlist):
     templist = []
     for window in oldlist:
@@ -121,8 +134,6 @@ def compare_win_list(newlist,oldlist):
         if oldlist.count(window) == 0: 
             templist.append(window)
     return templist
-
-
 
 
 def create_win_list():
@@ -151,12 +162,20 @@ def simple():
     Windows = create_win_list()
     arrange(get_simple_tile(len(Windows)),Windows)
    
+
 def swap():
     winlist = create_win_list()
     active = get_active_window()
     winlist.remove(active)
     winlist.insert(0,active)
     arrange(get_simple_tile(len(winlist)),winlist)
+
+def cycle():
+    winlist = create_win_list()
+    winlist.insert(0,winlist[len(winlist)-1])
+    winlist = winlist[:-1]
+    arrange(get_simple_tile(len(winlist)),winlist)
+
 
 
 if sys.argv[1] == "left":
@@ -167,5 +186,8 @@ elif sys.argv[1] == "simple":
     simple()
 elif sys.argv[1] == "swap":
     swap()
+elif sys.argv[1] == "cycle":
+    cycle()
+
 
 
