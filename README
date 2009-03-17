@@ -10,6 +10,8 @@ swap - will swap the active window to master column
 
 cycle - Cycle all the windows in the master pane
 
+vertical - simple vertical tiling
+
 You can change the main window factor BottomPadding TopPadding LeftPadding RightPadding though it detects most of the panels. You may have to change wintitle and border according to your theme.
 
 If you need other layouts modify get_simple_tile 

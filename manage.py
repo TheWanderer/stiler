@@ -85,6 +85,18 @@ def get_simple_tile(wincount):
 
     return layout
 
+def get_vertical_tile(wincount):
+    layout = [] 
+    y = OrigY
+    width = int(MaxWidth/wincount)
+    height = MaxHeight - WinTitle - WinBorder
+    for n in range(0,wincount):
+        x= OrigX + n * width
+        layout.append((x,y,width,height))
+
+    return layout
+
+
 
 def move_active(PosX,PosY,Width,Height):
     command =  " wmctrl -r :ACTIVE: -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
@@ -170,6 +182,15 @@ def swap():
     winlist.insert(0,active)
     arrange(get_simple_tile(len(winlist)),winlist)
 
+def vertical():
+    winlist = create_win_list()
+    active = get_active_window()
+    winlist.remove(active)
+    winlist.insert(0,active)
+    arrange(get_vertical_tile(len(winlist)),winlist)
+
+
+
 def cycle():
     winlist = create_win_list()
     winlist.insert(0,winlist[len(winlist)-1])
@@ -184,6 +205,8 @@ elif sys.argv[1] == "right":
     right()
 elif sys.argv[1] == "simple":
     simple()
+elif sys.argv[1] == "vertical":
+    vertical()
 elif sys.argv[1] == "swap":
     swap()
 elif sys.argv[1] == "cycle":
