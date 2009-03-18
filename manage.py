@@ -96,6 +96,18 @@ def get_vertical_tile(wincount):
 
     return layout
 
+def get_horiz_tile(wincount):
+    layout = [] 
+    x = OrigX
+    height = int(MaxHeight/wincount - WinTitle - WinBorder)
+    width = MaxWidth
+    for n in range(0,wincount):
+        y= OrigY + int((MaxHeight/wincount)*(n))
+        layout.append((x,y,width,height))
+
+    return layout
+
+
 
 
 def move_active(PosX,PosY,Width,Height):
@@ -189,6 +201,13 @@ def vertical():
     winlist.insert(0,active)
     arrange(get_vertical_tile(len(winlist)),winlist)
 
+def horiz():
+    winlist = create_win_list()
+    active = get_active_window()
+    winlist.remove(active)
+    winlist.insert(0,active)
+    arrange(get_horiz_tile(len(winlist)),winlist)
+
 
 
 def cycle():
@@ -207,6 +226,8 @@ elif sys.argv[1] == "simple":
     simple()
 elif sys.argv[1] == "vertical":
     vertical()
+elif sys.argv[1] == "horizontal":
+    horiz()
 elif sys.argv[1] == "swap":
     swap()
 elif sys.argv[1] == "cycle":
