@@ -208,15 +208,19 @@ def horiz():
     winlist.insert(0,active)
     arrange(get_horiz_tile(len(winlist)),winlist)
 
-
-
 def cycle():
     winlist = create_win_list()
     winlist.insert(0,winlist[len(winlist)-1])
     winlist = winlist[:-1]
     arrange(get_simple_tile(len(winlist)),winlist)
 
-
+def maximize():
+    Width=MaxWidth
+    Height=MaxHeight - WinTitle -WinBorder
+    PosX=LeftPadding
+    PosY=TopPadding
+    move_active(PosX,PosY,Width,Height)
+    raise_window(":ACTIVE:")
 
 if sys.argv[1] == "left":
     left()
@@ -232,6 +236,9 @@ elif sys.argv[1] == "swap":
     swap()
 elif sys.argv[1] == "cycle":
     cycle()
+elif sys.argv[1] == "maximize":
+    maximize()
+
 
 
 
