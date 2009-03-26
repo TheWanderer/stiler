@@ -2,18 +2,14 @@ Basically a simple python script which does tiling on any windowmanager (Perfect
 It uses wmctrl to get the info and manage the windows. Bind it to a key or to autowhatever-on-window-creation-hook.
 
 Currently options are
-simple - The basic tiling layout . 1 Main + all other at the side.
+simple 		- The basic tiling layout . 1 Main + all other at the side.
+left,right 	- Does the new windows7 ish style of sticking to the sides.
+swap 		- Will swap the active window to master column
+cycle 		- Cycle all the windows in the master pane
+vertical 	- Simple vertical tiling
+horizontal 	- Simple horizontal tiling
+maximize 	- Maximize the active window/ for openbox which doesn't permit resizing of max windows
 
-left,right - Does the new windows7 ish style of sticking to the sides.
-
-swap - will swap the active window to master column
-
-cycle - Cycle all the windows in the master pane
-
-vertical - simple vertical tiling
-
-horizontal - simple horizontal tiling
-
-You can change the main window factor BottomPadding TopPadding LeftPadding RightPadding though it detects most of the panels. You may have to change wintitle and border according to your theme.
+On first run it will create a config file ~/.managerc. Modify the values to suit your window decorations/Desktop padding. 
 
 If you need other layouts modify get_simple_tile 

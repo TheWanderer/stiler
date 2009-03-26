@@ -3,15 +3,28 @@ import sys
 import os
 import commands
 import pickle
+import ConfigParser
 
+def initconfig():
+    rcfile=os.getenv('HOME')+"/.managerc"
+    if not os.path.exists(rcfile):
+        cfg=open(rcfile,'w')
+        cfg.write("""#Tweak these values 
+[default]
 BottomPadding = 0
 TopPadding = 0
 LeftPadding = 0
 RightPadding = 0
 WinTitle = 21
 WinBorder = 1
-TempFile = "/tmp/tile_winlist"
 MwFactor = 0.65
+TempFile = /tmp/tile_winlist
+""")
+        cfg.close()
+
+    config=ConfigParser.RawConfigParser()
+    config.read(rcfile)
+    return config
 
 
 def initialize():
@@ -58,6 +71,16 @@ def retrieve(file):
         return (dict)
 
 
+# Get all global variables
+Config = initconfig()
+BottomPadding = Config.getint("default","BottomPadding")
+TopPadding = Config.getint("default","TopPadding")
+LeftPadding = Config.getint("default","LeftPadding")
+RightPadding = Config.getint("default","RightPadding")
+WinTitle = Config.getint("default","WinTitle")
+WinBorder = Config.getint("default","WinBorder")
+MwFactor = Config.getfloat("default","MwFactor")
+TempFile = Config.get("default","TempFile")
 (Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
 MaxWidth = int(MaxWidthStr) - LeftPadding - RightPadding
 MaxHeight = int(MaxHeightStr) - TopPadding - BottomPadding
@@ -85,6 +108,7 @@ def get_simple_tile(wincount):
 
     return layout
 
+
 def get_vertical_tile(wincount):
     layout = [] 
     y = OrigY
@@ -96,6 +120,7 @@ def get_vertical_tile(wincount):
 
     return layout
 
+
 def get_horiz_tile(wincount):
     layout = [] 
     x = OrigX
@@ -106,8 +131,6 @@ def get_horiz_tile(wincount):
         layout.append((x,y,width,height))
 
     return layout
-
-
 
 
 def move_active(PosX,PosY,Width,Height):
@@ -194,12 +217,14 @@ def swap():
     winlist.insert(0,active)
     arrange(get_simple_tile(len(winlist)),winlist)
 
+
 def vertical():
     winlist = create_win_list()
     active = get_active_window()
     winlist.remove(active)
     winlist.insert(0,active)
     arrange(get_vertical_tile(len(winlist)),winlist)
+
 
 def horiz():
     winlist = create_win_list()
@@ -208,11 +233,13 @@ def horiz():
     winlist.insert(0,active)
     arrange(get_horiz_tile(len(winlist)),winlist)
 
+
 def cycle():
     winlist = create_win_list()
     winlist.insert(0,winlist[len(winlist)-1])
     winlist = winlist[:-1]
     arrange(get_simple_tile(len(winlist)),winlist)
+
 
 def maximize():
     Width=MaxWidth
@@ -221,6 +248,7 @@ def maximize():
     PosY=TopPadding
     move_active(PosX,PosY,Width,Height)
     raise_window(":ACTIVE:")
+
 
 if sys.argv[1] == "left":
     left()
@@ -238,7 +266,4 @@ elif sys.argv[1] == "cycle":
     cycle()
 elif sys.argv[1] == "maximize":
     maximize()
-
-
-
 
