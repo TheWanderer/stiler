@@ -6,7 +6,7 @@ import pickle
 import ConfigParser
 
 def initconfig():
-    rcfile=os.getenv('HOME')+"/.managerc"
+    rcfile=os.getenv('HOME')+"/.stilerrc"
     if not os.path.exists(rcfile):
         cfg=open(rcfile,'w')
         cfg.write("""#Tweak these values 

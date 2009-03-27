@@ -10,6 +10,6 @@ vertical 	- Simple vertical tiling
 horizontal 	- Simple horizontal tiling
 maximize 	- Maximize the active window/ for openbox which doesn't permit resizing of max windows
 
-On first run it will create a config file ~/.managerc. Modify the values to suit your window decorations/Desktop padding. 
+On first run it will create a config file ~/.stilerrc. Modify the values to suit your window decorations/Desktop padding. 
 
 If you need other layouts modify get_simple_tile 
