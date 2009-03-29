@@ -150,6 +150,18 @@ def get_horiz_tile(wincount):
 
     return layout
 
+def get_max_all(wincount):
+    layout = [] 
+    x = OrigX
+    y = OrigY 
+    height = MaxHeight - WinTitle - WinBorder
+    width = MaxWidth
+    for n in range(0,wincount):
+        layout.append((x,y,width,height))
+
+    return layout
+
+
 
 def move_active(PosX,PosY,Width,Height):
     command =  " wmctrl -r :ACTIVE: -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
@@ -267,6 +279,14 @@ def maximize():
     move_active(PosX,PosY,Width,Height)
     raise_window(":ACTIVE:")
 
+def max_all():
+    winlist = create_win_list()
+    active = get_active_window()
+    winlist.remove(active)
+    winlist.insert(0,active)
+    arrange(get_max_all(len(winlist)),winlist)
+
+
 
 if sys.argv[1] == "left":
     left()
@@ -284,4 +304,6 @@ elif sys.argv[1] == "cycle":
     cycle()
 elif sys.argv[1] == "maximize":
     maximize()
+elif sys.argv[1] == "max_all":
+    max_all()
 

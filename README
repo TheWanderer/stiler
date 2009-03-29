@@ -9,6 +9,7 @@ cycle 		- Cycle all the windows in the master pane
 vertical 	- Simple vertical tiling
 horizontal 	- Simple horizontal tiling
 maximize 	- Maximize the active window/ for openbox which doesn't permit resizing of max windows
+max_all 	- Maximize all windows
 
 On first run it will create a config file ~/.stilerrc. Modify the values to suit your window decorations/Desktop padding. 
 
