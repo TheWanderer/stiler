@@ -36,6 +36,7 @@ RightPadding = 0
 WinTitle = 21
 WinBorder = 1
 MwFactor = 0.65
+GridWidths = 0.50,0.65,0.35
 TempFile = /tmp/tile_winlist
 """)
         cfg.close()
@@ -67,8 +68,12 @@ def initialize():
 
 
 def get_active_window():
-    return str(hex(int(commands.getoutput("xdotool getactivewindow 2>/dev/null").split()[0])))
-    
+    active_window_list = str(hex(int(commands.getoutput("xdotool getactivewindow 2>/dev/null").split()[0])))
+    return filter_excluded(active_window_list) 
+
+def get_active_window_width_height():
+    active_window = get_active_window()
+    return commands.getoutput(" xwininfo -id "+active_window+" | egrep \"Height|Width\" | cut -d: -f2 | tr -d \" \"").split("\n")
 
 def store(object,file):
     with open(file, 'w') as f:
@@ -99,6 +104,9 @@ WinTitle = Config.getint("default","WinTitle")
 WinBorder = Config.getint("default","WinBorder")
 MwFactor = Config.getfloat("default","MwFactor")
 TempFile = Config.get("default","TempFile")
+CORNER_WIDTHS = map(lambda y:float(y),Config.get("default","GridWidths").split(","))
+CENTER_WIDTHS = [1.0,min(CORNER_WIDTHS)]
+
 (Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
 MaxWidth = int(MaxWidthStr) - LeftPadding - RightPadding
 MaxHeight = int(MaxHeightStr) - TopPadding - BottomPadding
@@ -106,6 +114,20 @@ OrigX = int(OrigXstr) + LeftPadding
 OrigY = int(OrigYstr) + TopPadding 
 OldWinList = retrieve(TempFile)
 
+# give the current closest width
+def get_width_constant(width, width_constant_array):
+    return min ( map (lambda y: [abs(y-width),y], width_constant_array))[1]
+
+# get the next width in the width_constant_array
+def get_next_width(current_width,width_array):
+
+    active_width = float(current_width)/MaxWidth
+
+    active_width_constant = width_array.index(get_width_constant(active_width,width_array))
+
+    width_multiplier = width_array[(active_width_constant+1)%len(width_array)]
+
+    return int(MaxWidth*width_multiplier)
 
 def get_simple_tile(wincount):
     rows = wincount - 1
@@ -164,14 +186,26 @@ def get_max_all(wincount):
 
 
 def move_active(PosX,PosY,Width,Height):
-    command =  " wmctrl -r :ACTIVE: -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
-    os.system(command)
+    windowid = ":ACTIVE:"
+    move_window(windowid,PosX,PosY,Width,Height)
 
 
+# resize and move the given window
 def move_window(windowid,PosX,PosY,Width,Height):
-    command =  " wmctrl -i -r " + windowid +  " -e 0," + str(PosX) + "," + str(PosY)+ "," + str(Width) + "," + str(Height)
+    if windowid == ":ACTIVE:":
+		window = "-r "+windowid
+    else:
+        window = "-i -r "+windowid
+
+	# NOTE: metacity doesn't like resizing and moving in the same step
+    # resize
+    command =  " wmctrl " + window +  " -e 0,-1,-1," + str(Width) + "," + str(Height)
     os.system(command)
-    command = "wmctrl -i -r " + windowid + " -b remove,hidden,shaded"
+    # move
+    command =  " wmctrl " + window +  " -e 0," + str(PosX) + "," + str(PosY)+ ",-1,-1"
+    os.system(command)
+    # set properties
+    command = "wmctrl " + window + " -b remove,hidden,shaded"
     os.system(command)
 
 
@@ -179,27 +213,99 @@ def raise_window(windowid):
     if windowid == ":ACTIVE:":
         command = "wmctrl -a :ACTIVE: "
     else:
-        command - "wmctrl -i -a " + windowid
+        command = "wmctrl -i -a " + windowid
     
     os.system(command)
 
+def bottom():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Height=(MaxHeight - WinBorder)/2 - WinTitle
+    if (Width + WinBorder) < MaxWidth:
+    	PosX=LeftPadding+Width+WinBorder
+    else:
+	PosX=LeftPadding
+    PosY=MaxHeight/2
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def top():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Height=(MaxHeight -WinBorder)/2 - WinTitle
+    if (Width + WinBorder) < MaxWidth:
+    	PosX=LeftPadding+Width+WinBorder
+    else:
+	PosX=LeftPadding
+    PosY=TopPadding
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def middle():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Height=MaxHeight - WinTitle -WinBorder
+    if Width < MaxWidth:
+    	PosX=LeftPadding+Width
+    else:
+	PosX=LeftPadding
+    PosY=TopPadding
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def top_left():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
+    Height=(MaxHeight -WinBorder)/2 - WinTitle
+    PosX=LeftPadding
+    PosY=TopPadding
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def top_right():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
+    Height=(MaxHeight -WinBorder)/2 - WinTitle
+    PosX=MaxWidth - Width
+    PosY=TopPadding
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def bottom_right():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
+    Height=(MaxHeight -WinBorder)/2 - WinTitle
+    PosX=MaxWidth - Width
+    PosY=MaxHeight/2
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
+
+def bottom_left():
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
+    Height=(MaxHeight -WinBorder)/2 - WinTitle
+    PosX=LeftPadding
+    PosY=MaxHeight/2
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
 
 def left():
-    Width=MaxWidth/2-1
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=MaxHeight - WinTitle -WinBorder
     PosX=LeftPadding
     PosY=TopPadding
-    move_active(PosX,PosY,Width,Height)
-    raise_window(":ACTIVE:")
-
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
 
 def right():
-    Width=MaxWidth/2-1
+    active = get_active_window()
+    Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=MaxHeight - WinTitle - WinBorder 
-    PosX=MaxWidth/2
+    PosX=MaxWidth - Width
     PosY=TopPadding
-    move_active(PosX,PosY,Width,Height)
-    raise_window(":ACTIVE:")
+    move_window(active,PosX,PosY,Width,Height)
+    raise_window(active)
     
 
 def compare_win_list(newlist,oldlist):
@@ -225,8 +331,22 @@ def create_win_list():
         else:
             Windows = compare_win_list(Windows,OldWindows)
 
+    Windows = filter_excluded(Windows)
+
     return Windows
 
+
+# remove windows that shouldn't be tiled
+def filter_excluded(Windows):
+
+    for win in Windows:
+    	window_type = commands.getoutput("xprop -id "+win+" _NET_WM_WINDOW_TYPE | cut -d_ -f10").split("\n")[0]
+        window_state = commands.getoutput("xprop -id "+win+" WM_STATE | grep \"window state\" | cut -d: -f2").split("\n")[0]
+	
+	if window_type == "UTILITY" or window_state == " Iconic" :
+		Windows.remove(win)
+
+    return Windows
 
 def arrange(layout,windows):
     for win , lay  in zip(windows,layout):
@@ -304,6 +424,20 @@ elif sys.argv[1] == "cycle":
     cycle()
 elif sys.argv[1] == "maximize":
     maximize()
+elif sys.argv[1] == "top_left":
+    top_left()
+elif sys.argv[1] == "top_right":
+    top_right()
+elif sys.argv[1] == "top":
+    top()
+elif sys.argv[1] == "bottom_left":
+    bottom_left()
+elif sys.argv[1] == "bottom_right":
+    bottom_right()
+elif sys.argv[1] == "bottom":
+    bottom()
+elif sys.argv[1] == "middle":
+    middle()
 elif sys.argv[1] == "max_all":
     max_all()
 
