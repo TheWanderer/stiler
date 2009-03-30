@@ -1,0 +1,60 @@
+###########################
+# xbindkeys configuration #
+###########################
+
+# copy the following key bindings into ~/.xbindkeysrc
+
+# stiler key bindings #
+
+#Tile Left
+"stiler.py left"
+    m:0x1c + c:83
+    Control+Alt+Mod2 + KP_Left 
+
+#Tile Right
+"stiler.py right"
+    m:0x1c + c:85
+    Control+Alt+Mod2 + KP_Right 
+
+#Tile Swap
+"stiler.py swap"
+    m:0x1c + c:91
+    Control+Alt+Mod2 + KP_Delete 
+
+#Tile Top
+"stiler.py top"
+    m:0x1c + c:80
+    Control+Alt+Mod2 + KP_Up 
+
+#Tile Top_Left
+"stiler.py top_left"
+    m:0x1c + c:79
+    Control+Alt+Mod2 + KP_Home 
+
+#Tile Top_Right
+"stiler.py top_right"
+    m:0x1c + c:81
+    Control+Alt+Mod2 + KP_Prior 
+
+#Tile Middle
+"stiler.py middle"
+    m:0x1c + c:84
+    Control+Alt+Mod2 + KP_Begin 
+
+#Tile Bottom_Left
+"stiler.py bottom_left"
+    m:0x1c + c:87
+    Control+Alt+Mod2 + KP_End 
+
+#Tile Bottom
+"stiler.py bottom"
+    m:0x1c + c:88
+    Control+Alt+Mod2 + KP_Down 
+
+#Tile Bottom_Right
+"stiler.py bottom_right"
+    m:0x1c + c:89
+    Control+Alt+Mod2 + KP_Next 
+
+#
+# End of xbindkeys configuration

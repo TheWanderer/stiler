@@ -36,7 +36,7 @@ RightPadding = 0
 WinTitle = 21
 WinBorder = 1
 MwFactor = 0.65
-GridWidths = 0.50,0.65,0.35
+GridWidths = 0.50,0.67,0.33
 TempFile = /tmp/tile_winlist
 """)
         cfg.close()
