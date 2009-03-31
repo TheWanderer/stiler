@@ -17,6 +17,7 @@
 #                                                                          #
 ############################################################################
 
+from __future__ import with_statement
 import sys
 import os
 import commands
@@ -36,6 +37,7 @@ RightPadding = 0
 WinTitle = 21
 WinBorder = 1
 MwFactor = 0.65
+Monitors = 1
 GridWidths = 0.50,0.67,0.33
 TempFile = /tmp/tile_winlist
 """)
@@ -70,10 +72,15 @@ def initialize():
 def get_active_window():
     active_window_list = str(hex(int(commands.getoutput("xdotool getactivewindow 2>/dev/null").split()[0])))
     return filter_excluded(active_window_list) 
-
+    
+# return a list of [width,height]
 def get_active_window_width_height():
     active_window = get_active_window()
     return commands.getoutput(" xwininfo -id "+active_window+" | egrep \"Height|Width\" | cut -d: -f2 | tr -d \" \"").split("\n")
+
+# return a list of [x,y]
+def get_window_x_y(windowid):
+    return commands.getoutput("xwininfo -id "+windowid+" | grep 'Corners' | cut -d' ' -f5 | cut -d'+' -f2,3").split("+")
 
 def store(object,file):
     with open(file, 'w') as f:
@@ -104,8 +111,9 @@ WinTitle = Config.getint("default","WinTitle")
 WinBorder = Config.getint("default","WinBorder")
 MwFactor = Config.getfloat("default","MwFactor")
 TempFile = Config.get("default","TempFile")
-CORNER_WIDTHS = map(lambda y:float(y),Config.get("default","GridWidths").split(","))
-CENTER_WIDTHS = [1.0,min(CORNER_WIDTHS)]
+Monitors = Config.getint("default","Monitors")
+CORNER_WIDTHS = map(lambda y:float(y)/Monitors,Config.get("default","GridWidths").split(","))
+CENTER_WIDTHS = [1.0/Monitors,min(CORNER_WIDTHS)]
 
 (Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
 MaxWidth = int(MaxWidthStr) - LeftPadding - RightPadding
@@ -219,36 +227,44 @@ def raise_window(windowid):
 
 def bottom():
     active = get_active_window()
-    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS)
     Height=(MaxHeight - WinBorder)/2 - WinTitle
-    if (Width + WinBorder) < MaxWidth:
-    	PosX=LeftPadding+Width+WinBorder
-    else:
-	PosX=LeftPadding
-    PosY=MaxHeight/2
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),Width+WinBorder/2);
+    PosY=MaxHeight/2+WinTitle
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
 
+def get_next_posx(current_x,new_width):
+
+    PosX = 0
+
+    if current_x < MaxWidth/Monitors:
+        if new_width < MaxWidth/Monitors - WinBorder:
+            PosX=LeftPadding+new_width
+        else:
+            PosX=LeftPadding
+    else:
+        if new_width < MaxWidth/Monitors - WinBorder:
+            PosX=MaxWidth/Monitors+LeftPadding+new_width
+        else:
+            PosX=LeftPadding+MaxWidth/Monitors
+        
+    return PosX
+
 def top():
     active = get_active_window()
-    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS)
     Height=(MaxHeight -WinBorder)/2 - WinTitle
-    if (Width + WinBorder) < MaxWidth:
-    	PosX=LeftPadding+Width+WinBorder
-    else:
-	PosX=LeftPadding
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),Width+WinBorder/2);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
 
 def middle():
     active = get_active_window()
-    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS) - WinBorder
+    Width=get_next_width(int(get_active_window_width_height()[0]),CENTER_WIDTHS)
     Height=MaxHeight - WinTitle -WinBorder
-    if Width < MaxWidth:
-    	PosX=LeftPadding+Width
-    else:
-	PosX=LeftPadding
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),Width+WinBorder/2);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
@@ -257,7 +273,7 @@ def top_left():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=(MaxHeight -WinBorder)/2 - WinTitle
-    PosX=LeftPadding
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),0);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
@@ -266,7 +282,7 @@ def top_right():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=(MaxHeight -WinBorder)/2 - WinTitle
-    PosX=MaxWidth - Width
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),MaxWidth/Monitors-Width);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
@@ -275,8 +291,8 @@ def bottom_right():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=(MaxHeight -WinBorder)/2 - WinTitle
-    PosX=MaxWidth - Width
-    PosY=MaxHeight/2
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),MaxWidth/Monitors-Width);
+    PosY=MaxHeight/2 + WinTitle
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
 
@@ -284,8 +300,8 @@ def bottom_left():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=(MaxHeight -WinBorder)/2 - WinTitle
-    PosX=LeftPadding
-    PosY=MaxHeight/2
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),0);
+    PosY=MaxHeight/2 + WinTitle
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
 
@@ -293,7 +309,7 @@ def left():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=MaxHeight - WinTitle -WinBorder
-    PosX=LeftPadding
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),0);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)
@@ -302,7 +318,7 @@ def right():
     active = get_active_window()
     Width=get_next_width(int(get_active_window_width_height()[0]),CORNER_WIDTHS) - WinBorder
     Height=MaxHeight - WinTitle - WinBorder 
-    PosX=MaxWidth - Width
+    PosX = get_next_posx(int(get_window_x_y(active)[0]),MaxWidth/Monitors-Width);
     PosY=TopPadding
     move_window(active,PosX,PosY,Width,Height)
     raise_window(active)

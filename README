@@ -27,6 +27,8 @@ bottom_right    - Place the active window in the bottom right corner of the scre
 
 Multiple calls to any of the grid options on the same active window will select different widths.  Grid widths can be changed in the ~/.stilerrc file.
 
+For a dual monitor setup set Monitors = 2 in the ~/.stilerrc file.
+
 On first run stiler will create a config file ~/.stilerrc. Modify the values to suit your window decorations/Desktop padding.  Change the GridWidths list to define different widths for the grid options.
 
 If you need other layouts modify get_simple_tile 
