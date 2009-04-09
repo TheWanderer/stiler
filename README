@@ -1,16 +1,22 @@
-Basically a simple python script which does tiling on any windowmanager (Perfectly on pekwm and openbox. Partly on compiz due to the fact that compiz says it has a single desktop even if there are 4 virtual desktops, which means all the windows you have will be tiled).
-It uses wmctrl to get the info and manage the windows. Bind options to keys or to autowhatever-on-window-creation-hook.  A sample xbindkeysrc file is included.
+stiler.py is a simple python script which does tiling on any X window-manager.
 
-Usage: OPTION
+stiler.py is known to work with pekwm, openbox, metacity, and compiz.
+
+Requirements:
+
+wmctrl          - used to get the window and desktop information and manage the windows
+xdotools        - used to get the currently active window
+
+Usage: stiler.py OPTION
 
 Standard options:
-simple 		- The basic tiling layout . 1 Main + all other at the side.
-swap 		- Will swap the active window to master column
-cycle 		- Cycle all the windows in the master pane
-vertical 	- Simple vertical tiling
-horizontal 	- Simple horizontal tiling
-maximize 	- Maximize the active window/ for openbox which doesn't permit resizing of max windows
-max_all 	- Maximize all windows
+simple          - The basic tiling layout . 1 Main + all other at the side.
+swap            - Will swap the active window to master column
+cycle           - Cycle all the windows in the master pane
+vertical        - Simple vertical tiling
+horizontal 	    - Simple horizontal tiling
+maximize        - Maximize the active window/ for openbox which doesn't permit resizing of max windows
+max_all         - Maximize all windows
 
 Grid options:
 
@@ -19,16 +25,48 @@ The following grid options mimic the functionality of compiz's grid plugin which
 top_left        - Place the active window in the top left corner of the screen
 top             - Place the active window along the top of the screen
 top_right       - Place the active window in the top right corner of the screen
-left,right 	- Does the new windows7 ish style of sticking to the sides.
+left,right      - Does the new windows7 ish style of sticking to the sides.
 middle          - Place the active window in the middle of the screen
 bottom_left     - Place the active window in the bottom left corner of the screen
 bottom          - Place the active window along the bottom of the screen
 bottom_right    - Place the active window in the bottom right corner of the screen
 
-Multiple calls to any of the grid options on the same active window will select different widths.  Grid widths can be changed in the ~/.stilerrc file.
+Multiple calls to any of the grid options on the same active window will select different widths.
 
-For a dual monitor setup set Monitors = 2 in the ~/.stilerrc file.
+On first run stiler will create a config file ~/.stilerrc. Modify the values to suit your window decorations/Desktop padding.
 
-On first run stiler will create a config file ~/.stilerrc. Modify the values to suit your window decorations/Desktop padding.  Change the GridWidths list to define different widths for the grid options.
+~/.stilerrc file options:
+
+leftpadding     - pads the left hand side of the screen the given number of pixels
+toppadding      - pads the top of the screen the given number of pixels
+bottompadding   - pads the bottom of the screen the given number of pixels
+rightpadding    - pads the right hand side of the screen the given number of pixels
+
+window padding options:
+
+winborder       - pads the given number of pixels around each window
+wintitle        - pads the given number of pixels above each window
+
+miscellaneous options 
+
+tempfile        - cache file for holding window positions
+
+simple layout options:
+
+mwfactor        - width of the bigger window in the simple layout
+windowfilter    - exclude minimized and UTILITY windows from being tiled
+
+grid layout options:
+
+monitors        - for a dual monitor setup set this to 2
+gridwidths      - a list of grid widths to use for splitting the screen.  0.33 should always be in the list
 
 If you need other layouts modify get_simple_tile 
+
+Known Issues:
+
+compiz          - compiz says it has a single desktop even if there are 4 virtual desktops, which means all the windows you have will be tiled.
+firefox         - firefox get a little stubborn when resized below a certain point
+
+See Also:
+xbindkeys       - map keyboard keys to stiler.py options.  a sample xbindkeysrc is provided.

@@ -24,26 +24,33 @@ import commands
 import pickle
 import ConfigParser
 
+usage = sys.argv[0] + " option"
+
 def initconfig():
     rcfile=os.getenv('HOME')+"/.stilerrc"
+
+    configDefaults={
+        'BottomPadding':'0',
+        'TopPadding': '0',
+        'LeftPadding': '0',
+        'RightPadding': '0',
+        'WinTitle': '21',
+        'WinBorder': '1',
+        'MwFactor': '0.65',
+        'Monitors': '1',
+        'GridWidths': '0.50,0.67,0.33',
+        'TempFile': '/tmp/tile_winlist',
+        'WindowFilter':'off',
+    }
+
+    config=ConfigParser.RawConfigParser(configDefaults)
+    
+    
     if not os.path.exists(rcfile):
         cfg=open(rcfile,'w')
-        cfg.write("""#Tweak these values 
-[default]
-BottomPadding = 0
-TopPadding = 0
-LeftPadding = 0
-RightPadding = 0
-WinTitle = 21
-WinBorder = 1
-MwFactor = 0.65
-Monitors = 1
-GridWidths = 0.50,0.67,0.33
-TempFile = /tmp/tile_winlist
-""")
+        config.write(cfg)
         cfg.close()
 
-    config=ConfigParser.RawConfigParser()
     config.read(rcfile)
     return config
 
@@ -103,16 +110,21 @@ def retrieve(file):
 
 # Get all global variables
 Config = initconfig()
-BottomPadding = Config.getint("default","BottomPadding")
-TopPadding = Config.getint("default","TopPadding")
-LeftPadding = Config.getint("default","LeftPadding")
-RightPadding = Config.getint("default","RightPadding")
-WinTitle = Config.getint("default","WinTitle")
-WinBorder = Config.getint("default","WinBorder")
-MwFactor = Config.getfloat("default","MwFactor")
-TempFile = Config.get("default","TempFile")
-Monitors = Config.getint("default","Monitors")
-CORNER_WIDTHS = map(lambda y:float(y)/Monitors,Config.get("default","GridWidths").split(","))
+cfgSection="DEFAULT"
+if Config.has_section("default"):
+    cfgSection="default"
+
+BottomPadding = Config.getint(cfgSection,"BottomPadding")
+TopPadding = Config.getint(cfgSection,"TopPadding")
+LeftPadding = Config.getint(cfgSection,"LeftPadding")
+RightPadding = Config.getint(cfgSection,"RightPadding")
+WinTitle = Config.getint(cfgSection,"WinTitle")
+WinBorder = Config.getint(cfgSection,"WinBorder")
+MwFactor = Config.getfloat(cfgSection,"MwFactor")
+TempFile = Config.get(cfgSection,"TempFile")
+Monitors = Config.getint(cfgSection,"Monitors")
+WindowFilter = Config.getboolean(cfgSection,"WindowFilter")
+CORNER_WIDTHS = map(lambda y:float(y)/Monitors,Config.get(cfgSection,"GridWidths").split(","))
 CENTER_WIDTHS = [1.0/Monitors,min(CORNER_WIDTHS)]
 
 (Desktop,OrigXstr,OrigYstr,MaxWidthStr,MaxHeightStr,WinList) = initialize()
@@ -206,6 +218,8 @@ def move_window(windowid,PosX,PosY,Width,Height):
         window = "-i -r "+windowid
 
 	# NOTE: metacity doesn't like resizing and moving in the same step
+    # unmaximize
+    os.system("wmctrl "+window+" -b remove,maximized_vert,maximized_horz")
     # resize
     command =  " wmctrl " + window +  " -e 0,-1,-1," + str(Width) + "," + str(Height)
     os.system(command)
@@ -354,13 +368,15 @@ def create_win_list():
 
 # remove windows that shouldn't be tiled
 def filter_excluded(Windows):
-
-    for win in Windows:
-    	window_type = commands.getoutput("xprop -id "+win+" _NET_WM_WINDOW_TYPE | cut -d_ -f10").split("\n")[0]
-        window_state = commands.getoutput("xprop -id "+win+" WM_STATE | grep \"window state\" | cut -d: -f2").split("\n")[0]
+    
+    if WindowFilter == True and (sys.argv[1] == "swap" or sys.argv[1] == "cycle" or sys.argv[1] == "simple") :
+    
+        for win in Windows:
+    	        window_type = commands.getoutput("xprop -id "+win+" _NET_WM_WINDOW_TYPE | cut -d_ -f10").split("\n")[0]
+                window_state = commands.getoutput("xprop -id "+win+" WM_STATE | grep \"window state\" | cut -d: -f2").split("\n")[0]
 	
-	if window_type == "UTILITY" or window_state == " Iconic" :
-		Windows.remove(win)
+	        if window_type == "UTILITY" or window_state == " Iconic" :
+		        Windows.remove(win)
 
     return Windows
 
@@ -392,7 +408,7 @@ def vertical():
     arrange(get_vertical_tile(len(winlist)),winlist)
 
 
-def horiz():
+def horizontal():
     winlist = create_win_list()
     active = get_active_window()
     winlist.remove(active)
@@ -422,38 +438,9 @@ def max_all():
     winlist.insert(0,active)
     arrange(get_max_all(len(winlist)),winlist)
 
-
-
-if sys.argv[1] == "left":
-    left()
-elif sys.argv[1] == "right":
-    right()
-elif sys.argv[1] == "simple":
-    simple()
-elif sys.argv[1] == "vertical":
-    vertical()
-elif sys.argv[1] == "horizontal":
-    horiz()
-elif sys.argv[1] == "swap":
-    swap()
-elif sys.argv[1] == "cycle":
-    cycle()
-elif sys.argv[1] == "maximize":
-    maximize()
-elif sys.argv[1] == "top_left":
-    top_left()
-elif sys.argv[1] == "top_right":
-    top_right()
-elif sys.argv[1] == "top":
-    top()
-elif sys.argv[1] == "bottom_left":
-    bottom_left()
-elif sys.argv[1] == "bottom_right":
-    bottom_right()
-elif sys.argv[1] == "bottom":
-    bottom()
-elif sys.argv[1] == "middle":
-    middle()
-elif sys.argv[1] == "max_all":
-    max_all()
+if len(sys.argv) == 1:
+    print usage
+    sys.exit(1)
+else:
+    eval(sys.argv[1]+"()")
 
